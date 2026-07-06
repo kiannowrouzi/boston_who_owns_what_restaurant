@@ -228,6 +228,23 @@ def render_detail(location_id: int) -> None:
         st.caption(f"Record last updated {loc.updated_at:%Y-%m-%d}.")
 
 
+@st.cache_resource(show_spinner=False)
+def ensure_seeded() -> bool:
+    """Build the database on first launch if it's empty (e.g. a cloud deploy).
+
+    cache_resource runs this once per server process; warm reruns are free.
+    """
+    from whoowns.bootstrap import bootstrap_if_empty, database_is_empty
+
+    if not database_is_empty():
+        return False
+    with st.spinner("Building the database on first launch (~30-60s)…"):
+        status = st.empty()
+        bootstrap_if_empty(on_step=lambda label: status.write(f"{label}…"))
+        status.empty()
+    return True
+
+
 def main() -> None:
     st.set_page_config(page_title="Who Owns Your Restaurant? — Boston", layout="wide")
     st.title("Who Owns Your Restaurant? — Boston")
@@ -237,9 +254,21 @@ def main() -> None:
         "every claim will show its sources."
     )
 
+    try:
+        ensure_seeded()
+    except Exception as exc:  # noqa: BLE001 — surface any pipeline failure to the user
+        st.error(
+            "Could not build the dataset on startup (the Boston open-data source may "
+            f"be unreachable). Details: {exc}"
+        )
+        st.stop()
+
     df = load_locations()
     if df.empty:
-        st.warning("No data yet — run `python scripts/seed.py` first.")
+        st.warning(
+            "No data available. Locally, run `python scripts/seed.py`. On a fresh "
+            "deploy the app seeds itself — try refreshing."
+        )
         return
 
     with st.sidebar:

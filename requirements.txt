@@ -1,4 +1,5 @@
 streamlit>=1.40
+pydeck>=0.9
 sqlalchemy>=2.0
 requests>=2.31
 pandas>=2.0

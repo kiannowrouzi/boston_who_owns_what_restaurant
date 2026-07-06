@@ -66,6 +66,17 @@ counts) as the primary signal and always display as ranges with reasoning.
 streamlit run app.py
 ```
 
+## Deploy (Streamlit Community Cloud)
+
+Point [share.streamlit.io](https://share.streamlit.io) at this repo, branch
+`main`, main file `app.py`. The database is gitignored, so on first launch the
+app **seeds itself** — fetching the open data, clustering, importing the
+verified ownership, and scoring estimates (~30-60s, see
+[whoowns/bootstrap.py](whoowns/bootstrap.py)). Community Cloud's filesystem is
+ephemeral, so this re-runs after each cold start. For a persistent, faster
+deployment, set a `DATABASE_URL` secret pointing at hosted Postgres (Supabase/
+Neon) and seed it once with the scripts above.
+
 ## Layout
 
 - `whoowns/models.py` — the ownership graph (spec §2): Location, Brand, Parent,
